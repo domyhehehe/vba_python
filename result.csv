@@ -1,0 +1,565 @@
+"horse","profile_url","notes"
+"miyagi+sirius","https://www.pedigreequery.com/miyagi+sirius","{
+  ""2024"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""ANIMAL KINGDOM"",
+    ""dam"": ""HEART OF SWALLOW"",
+    ""trainer"": ""SHINICHI HATAKEYAMA"",
+    ""fam"": ""14-a"",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1400M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""MIYAGI SIRIUS"",
+    ""2nd"": ""CALIFIA"",
+    ""3rd"": ""RED OPAL4"",
+    ""time"": ""1:29.3"",
+    ""comment"": """",
+    ""position"": ""1着""
+  }
+}"
+"califia","https://www.pedigreequery.com/califia","{
+  ""2024"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1400M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""MIYAGI SIRIUS"",
+    ""2nd"": ""CALIFIA"",
+    ""3rd"": ""RED OPAL4"",
+    ""time"": ""1:29.3"",
+    ""comment"": """",
+    ""position"": ""2着""
+  }
+}"
+"red+opal4","https://www.pedigreequery.com/red+opal4","{
+  ""2024"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1400M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""MIYAGI SIRIUS"",
+    ""2nd"": ""CALIFIA"",
+    ""3rd"": ""RED OPAL4"",
+    ""time"": ""1:29.3"",
+    ""comment"": """",
+    ""position"": ""3着""
+  }
+}"
+"miniature17","https://www.pedigreequery.com/miniature17","{
+  ""2023"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""LOVELY DAY7"",
+    ""dam"": ""ROMAN BRIDGE"",
+    ""trainer"": ""YUUJI SATO"",
+    ""fam"": ""4-m"",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1400M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""MINIATURE17"",
+    ""2nd"": ""DAREKANO KAZENOATO"",
+    ""3rd"": ""ESPRESSIVO2"",
+    ""time"": ""1:29.1"",
+    ""comment"": """",
+    ""position"": ""1着""
+  }
+}"
+"darekano+kazenoato","https://www.pedigreequery.com/darekano+kazenoato","{
+  ""2023"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1400M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""MINIATURE17"",
+    ""2nd"": ""DAREKANO KAZENOATO"",
+    ""3rd"": ""ESPRESSIVO2"",
+    ""time"": ""1:29.1"",
+    ""comment"": """",
+    ""position"": ""2着""
+  }
+}"
+"espressivo2","https://www.pedigreequery.com/espressivo2","{
+  ""2023"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1400M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""MINIATURE17"",
+    ""2nd"": ""DAREKANO KAZENOATO"",
+    ""3rd"": ""ESPRESSIVO2"",
+    ""time"": ""1:29.1"",
+    ""comment"": """",
+    ""position"": ""3着""
+  }
+}"
+"under+karad","https://www.pedigreequery.com/under+karad","{
+  ""1982"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""KARAD"",
+    ""dam"": ""U S QUEEN"",
+    ""trainer"": """",
+    ""fam"": ""6"",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1600M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""UNDER KARAD"",
+    ""2nd"": ""YOSHI BEAM"",
+    ""3rd"": ""BLACK LILY3"",
+    ""time"": ""1:44.8"",
+    ""comment"": """",
+    ""position"": ""1着""
+  },
+  ""1981"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""KARAD"",
+    ""dam"": ""U S QUEEN"",
+    ""trainer"": """",
+    ""fam"": ""6"",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1750M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""UNDER KARAD"",
+    ""2nd"": ""YOSHI BEAM"",
+    ""3rd"": ""BLACK LILY3"",
+    ""time"": ""1:44.8"",
+    ""comment"": """",
+    ""position"": ""1着""
+  }
+}"
+"yoshi+beam","https://www.pedigreequery.com/yoshi+beam","{
+  ""1982"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1600M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""UNDER KARAD"",
+    ""2nd"": ""YOSHI BEAM"",
+    ""3rd"": ""BLACK LILY3"",
+    ""time"": ""1:44.8"",
+    ""comment"": """",
+    ""position"": ""2着""
+  },
+  ""1981"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1750M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""UNDER KARAD"",
+    ""2nd"": ""YOSHI BEAM"",
+    ""3rd"": ""BLACK LILY3"",
+    ""time"": ""1:44.8"",
+    ""comment"": """",
+    ""position"": ""2着""
+  }
+}"
+"black+lily3","https://www.pedigreequery.com/black+lily3","{
+  ""1982"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1600M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""UNDER KARAD"",
+    ""2nd"": ""YOSHI BEAM"",
+    ""3rd"": ""BLACK LILY3"",
+    ""time"": ""1:44.8"",
+    ""comment"": """",
+    ""position"": ""3着""
+  },
+  ""1981"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1750M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""UNDER KARAD"",
+    ""2nd"": ""YOSHI BEAM"",
+    ""3rd"": ""BLACK LILY3"",
+    ""time"": ""1:44.8"",
+    ""comment"": """",
+    ""position"": ""3着""
+  }
+}"
+"san+moleros","https://www.pedigreequery.com/san+moleros","{
+  ""1980"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""SIR PENFRO"",
+    ""dam"": ""TOBI NOBORI"",
+    ""trainer"": """",
+    ""fam"": ""7-c"",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1600M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""SAN MOLEROS"",
+    ""2nd"": ""KITANO MOUTIERS"",
+    ""3rd"": ""ASAKA MISS"",
+    ""time"": ""1:47.9"",
+    ""comment"": """",
+    ""position"": ""1着""
+  }
+}"
+"kitano+moutiers","https://www.pedigreequery.com/kitano+moutiers","{
+  ""1980"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1600M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""SAN MOLEROS"",
+    ""2nd"": ""KITANO MOUTIERS"",
+    ""3rd"": ""ASAKA MISS"",
+    ""time"": ""1:47.9"",
+    ""comment"": """",
+    ""position"": ""2着""
+  }
+}"
+"asaka+miss","https://www.pedigreequery.com/asaka+miss","{
+  ""1980"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1600M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""SAN MOLEROS"",
+    ""2nd"": ""KITANO MOUTIERS"",
+    ""3rd"": ""ASAKA MISS"",
+    ""time"": ""1:47.9"",
+    ""comment"": """",
+    ""position"": ""3着""
+  }
+}"
+"okuchi+light","https://www.pedigreequery.com/okuchi+light","{
+  ""1979"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""YELLOW GOD"",
+    ""dam"": ""SEA GLADE"",
+    ""trainer"": """",
+    ""fam"": ""3-d"",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""OKUCHI LIGHT"",
+    ""2nd"": ""CHIYODA OHI"",
+    ""3rd"": ""PRETTY DANCER15"",
+    ""time"": ""1:32.9"",
+    ""comment"": """",
+    ""position"": ""1着""
+  }
+}"
+"chiyoda+ohi","https://www.pedigreequery.com/chiyoda+ohi","{
+  ""1979"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""OKUCHI LIGHT"",
+    ""2nd"": ""CHIYODA OHI"",
+    ""3rd"": ""PRETTY DANCER15"",
+    ""time"": ""1:32.9"",
+    ""comment"": """",
+    ""position"": ""2着""
+  }
+}"
+"pretty+dancer15","https://www.pedigreequery.com/pretty+dancer15","{
+  ""1979"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""OKUCHI LIGHT"",
+    ""2nd"": ""CHIYODA OHI"",
+    ""3rd"": ""PRETTY DANCER15"",
+    ""time"": ""1:32.9"",
+    ""comment"": """",
+    ""position"": ""3着""
+  }
+}"
+"lucky+elsa","https://www.pedigreequery.com/lucky+elsa","{
+  ""1978"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""DICTA DRAKE2"",
+    ""dam"": ""PAIR OF SHOES"",
+    ""trainer"": """",
+    ""fam"": ""4"",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""LUCKY ELSA"",
+    ""2nd"": ""SAKAMOTO SEIKO"",
+    ""3rd"": ""ELIZABETH LORD"",
+    ""time"": ""1:31.2"",
+    ""comment"": """",
+    ""position"": ""1着""
+  }
+}"
+"sakamoto+seiko","https://www.pedigreequery.com/sakamoto+seiko","{
+  ""1978"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""LUCKY ELSA"",
+    ""2nd"": ""SAKAMOTO SEIKO"",
+    ""3rd"": ""ELIZABETH LORD"",
+    ""time"": ""1:31.2"",
+    ""comment"": """",
+    ""position"": ""2着""
+  }
+}"
+"elizabeth+lord","https://www.pedigreequery.com/elizabeth+lord","{
+  ""1978"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""LUCKY ELSA"",
+    ""2nd"": ""SAKAMOTO SEIKO"",
+    ""3rd"": ""ELIZABETH LORD"",
+    ""time"": ""1:31.2"",
+    ""comment"": """",
+    ""position"": ""3着""
+  }
+}"
+"doctor+loren","https://www.pedigreequery.com/doctor+loren","{
+  ""1977"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""THE PALE"",
+    ""dam"": ""IZUMI SHIKIBU"",
+    ""trainer"": """",
+    ""fam"": ""4-o"",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""DOCTOR LOREN"",
+    ""2nd"": ""HITMAN BAYE"",
+    ""3rd"": ""WORLD JEANNE"",
+    ""time"": ""1:33.3"",
+    ""comment"": ""DOCTOR LOREN AS KOKUSAI QUEEN"",
+    ""position"": ""1着""
+  }
+}"
+"hitman+baye","https://www.pedigreequery.com/hitman+baye","{
+  ""1977"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""DOCTOR LOREN"",
+    ""2nd"": ""HITMAN BAYE"",
+    ""3rd"": ""WORLD JEANNE"",
+    ""time"": ""1:33.3"",
+    ""comment"": ""DOCTOR LOREN AS KOKUSAI QUEEN"",
+    ""position"": ""2着""
+  }
+}"
+"world+jeanne","https://www.pedigreequery.com/world+jeanne","{
+  ""1977"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""DOCTOR LOREN"",
+    ""2nd"": ""HITMAN BAYE"",
+    ""3rd"": ""WORLD JEANNE"",
+    ""time"": ""1:33.3"",
+    ""comment"": ""DOCTOR LOREN AS KOKUSAI QUEEN"",
+    ""position"": ""3着""
+  }
+}"
+"kane+hatsuyuki","https://www.pedigreequery.com/kane+hatsuyuki","{
+  ""1976"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""PHILIUS"",
+    ""dam"": ""IN THE SHADOWS"",
+    ""trainer"": """",
+    ""fam"": ""1-w"",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""KANE HATSUYUKI"",
+    ""2nd"": ""SAKANO EMILE"",
+    ""3rd"": ""RYU SALLY"",
+    ""time"": ""1:29.1"",
+    ""comment"": """",
+    ""position"": ""1着""
+  }
+}"
+"sakano+emile","https://www.pedigreequery.com/sakano+emile","{
+  ""1976"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""KANE HATSUYUKI"",
+    ""2nd"": ""SAKANO EMILE"",
+    ""3rd"": ""RYU SALLY"",
+    ""time"": ""1:29.1"",
+    ""comment"": """",
+    ""position"": ""2着""
+  }
+}"
+"ryu+sally","https://www.pedigreequery.com/ryu+sally","{
+  ""1976"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MORIOKA (OLD COURSE)"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""KANE HATSUYUKI"",
+    ""2nd"": ""SAKANO EMILE"",
+    ""3rd"": ""RYU SALLY"",
+    ""time"": ""1:29.1"",
+    ""comment"": """",
+    ""position"": ""3着""
+  }
+}"
+"yamatono+ken","https://www.pedigreequery.com/yamatono+ken","{
+  ""1975"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": ""IONIAN3"",
+    ""dam"": ""MOUNT SOLONA"",
+    ""trainer"": """",
+    ""fam"": ""1-t"",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""YAMATONO KEN"",
+    ""2nd"": ""FAST HALLELUJAH"",
+    ""3rd"": ""IWATE CHIKARA"",
+    ""time"": ""1:31.9"",
+    ""comment"": """",
+    ""position"": ""1着""
+  }
+}"
+"fast+hallelujah","https://www.pedigreequery.com/fast+hallelujah","{
+  ""1975"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""YAMATONO KEN"",
+    ""2nd"": ""FAST HALLELUJAH"",
+    ""3rd"": ""IWATE CHIKARA"",
+    ""time"": ""1:31.9"",
+    ""comment"": """",
+    ""position"": ""2着""
+  }
+}"
+"iwate+chikara","https://www.pedigreequery.com/iwate+chikara","{
+  ""1975"": {
+    ""race"": ""AYAME SHO (IWATE)"",
+    ""sire"": """",
+    ""dam"": """",
+    ""trainer"": """",
+    ""fam"": """",
+    ""track"": ""MIZUSAWA"",
+    ""dist"": ""1420M"",
+    ""grade"": """",
+    ""surf"": ""Dirt"",
+    ""1st"": ""YAMATONO KEN"",
+    ""2nd"": ""FAST HALLELUJAH"",
+    ""3rd"": ""IWATE CHIKARA"",
+    ""time"": ""1:31.9"",
+    ""comment"": """",
+    ""position"": ""3着""
+  }
+}"

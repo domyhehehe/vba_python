@@ -55,6 +55,7 @@ CSV_HEADER = [
     "Details",
     "URL",
     "Horse Name",
+    "LoadURL",
     "SubjectInfoText",
 ]
 
@@ -250,10 +251,40 @@ def _blood_row_sort_key(row):
     is_founder = 0 if pk == "" else 1
     return (is_founder, year_num, horse_name, pk.upper())
 
+def _is_truthy_csv_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    s = norm_space(value).lower()
+    return s in ("1", "true", "yes", "y")
+
+def _normalize_blood_row_dict(row):
+    normalized = {h: "" for h in CSV_HEADER}
+    if isinstance(row, dict):
+        for h in CSV_HEADER:
+            normalized[h] = row.get(h, "")
+    elif isinstance(row, (list, tuple)):
+        for idx, h in enumerate(CSV_HEADER):
+            normalized[h] = row[idx] if idx < len(row) else ""
+    normalized["LoadURL"] = "True" if _is_truthy_csv_bool(normalized.get("LoadURL", "")) else ""
+    return normalized
+
+def _blood_row_has_loaded_url(row) -> bool:
+    row = _normalize_blood_row_dict(row)
+    if _is_truthy_csv_bool(row.get("LoadURL", "")):
+        return True
+
+    detail_fields = (
+        "DP", "DI", "CD", "Starts", "Wins", "Places", "Shows",
+        "CareerEarnings", "Owner", "Breeder", "StateBred",
+        "WinningsText", "SubjectInfoText",
+    )
+    return any(norm_space(row.get(field, "")) for field in detail_fields)
+
 # =====================
 # CSV helpers
 # =====================
 def upsert_row(rows_by_pk, row):
+    row = _normalize_blood_row_dict(row)
     pk = row.get("PrimaryKey", "")
     if pk is None or pk == "":
         return
@@ -264,6 +295,8 @@ def upsert_row(rows_by_pk, row):
     for k, v in row.items():
         if (cur.get(k) in (None, "", "不明")) and v not in (None, "", "不明"):
             cur[k] = v
+    if _is_truthy_csv_bool(row.get("LoadURL", "")):
+        cur["LoadURL"] = "True"
 
 def _ensure_founder(rows_by_pk):
     if "" not in rows_by_pk:
@@ -306,13 +339,23 @@ def sort_blood_csv_file(filepath: str, encoding: str = CSV_FILE_ENCODING):
         return 0
 
     header = rows[0]
-    data_rows = [row for row in rows[1:] if row]
+    data_rows = []
+    for row in rows[1:]:
+        if not row:
+            continue
+        row_dict = {}
+        for idx, col in enumerate(header or []):
+            row_dict[col] = row[idx] if idx < len(row) else ""
+        normalized_row = _normalize_blood_row_dict(row_dict)
+        if _blood_row_has_loaded_url(row_dict):
+            normalized_row["LoadURL"] = "True"
+        data_rows.append(normalized_row)
 
     with open(filepath, "w", encoding=encoding, errors="replace", newline="") as f:
         ww = csv.writer(f, lineterminator="\n")
-        ww.writerow(header)
+        ww.writerow(CSV_HEADER)
         for row in sorted(data_rows, key=_blood_row_sort_key):
-            ww.writerow(row)
+            ww.writerow([row.get(h, "") for h in CSV_HEADER])
 
     return len(data_rows)
 
@@ -334,32 +377,42 @@ def append_unique_csv(csv_text: str, filepath: str, subject_pk: str):
     if os.path.exists(filepath):
         with open(filepath, "r", encoding=CSV_FILE_ENCODING, errors="replace", newline="") as f:
             rr = csv.reader(f)
+            existing_header = None
             for i, row in enumerate(rr):
                 if i == 0:
+                    existing_header = row
                     continue
                 if not row:
                     continue
-                pk = (row[0] or "").strip()
+                existing_row = {}
+                for idx, col in enumerate(existing_header or []):
+                    existing_row[col] = row[idx] if idx < len(row) else ""
+                normalized_row = _normalize_blood_row_dict(existing_row)
+                if _blood_row_has_loaded_url(existing_row):
+                    normalized_row["LoadURL"] = "True"
+                pk = (normalized_row.get("PrimaryKey", "") or "").strip()
                 if pk:
-                    rows_by_pk[pk] = row
+                    rows_by_pk[pk] = normalized_row
 
     for row in new_rows:
         if not row:
             continue
-        pk = (row[0] or "").strip()
+        normalized_row = _normalize_blood_row_dict(row)
+        pk = (normalized_row.get("PrimaryKey", "") or "").strip()
         if not pk:
             continue
 
         if subject_pk and pk == subject_pk:
-            rows_by_pk[pk] = row
-        elif pk not in rows_by_pk:
-            rows_by_pk[pk] = row
+            rows_by_pk[pk] = normalized_row
+        else:
+            upsert_row(rows_by_pk, normalized_row)
 
     with open(filepath, "w", encoding=CSV_FILE_ENCODING, errors="replace", newline="") as f:
         ww = csv.writer(f, lineterminator="\n")
         ww.writerow(header)
         for row in rows_by_pk.values():
-            ww.writerow(row)
+            normalized_row = _normalize_blood_row_dict(row)
+            ww.writerow([normalized_row.get(h, "") for h in header])
 
 def append_unique_stakes_rows_csv(csv_text: str, filepath: str, encoding: str = CSV_FILE_ENCODING):
     if not csv_text.strip():
@@ -463,6 +516,31 @@ def load_existing_blood_pks(filepath: str, encoding: str = CSV_FILE_ENCODING):
                 out.add(pk)
     return out
 
+def load_existing_blood_rows(filepath: str, encoding: str = CSV_FILE_ENCODING):
+    rows_by_pk = {}
+    if not os.path.exists(filepath):
+        return rows_by_pk
+
+    with open(filepath, "r", encoding=encoding, errors="replace", newline="") as f:
+        rr = csv.reader(f)
+        header = None
+        for i, row in enumerate(rr):
+            if i == 0:
+                header = row
+                continue
+            if not row:
+                continue
+            raw_row = {}
+            for idx, col in enumerate(header or []):
+                raw_row[col] = row[idx] if idx < len(row) else ""
+            normalized_row = _normalize_blood_row_dict(raw_row)
+            if _blood_row_has_loaded_url(raw_row):
+                normalized_row["LoadURL"] = "True"
+            pk = (normalized_row.get("PrimaryKey", "") or "").strip()
+            if pk:
+                rows_by_pk[pk] = normalized_row
+    return rows_by_pk
+
 def load_horse_urls_from_stakes_csv(filepath: str, encoding: str = CSV_FILE_ENCODING):
     urls = []
     seen = set()
@@ -564,7 +642,11 @@ def process_horse_targets(urls, session, blood_out_path: str, register_depth=4, 
             queue.append(nx)
     queued = set(queue)
     visited_urls = set()
-    existing_pks = load_existing_blood_pks(blood_out_path, encoding=CSV_FILE_ENCODING)
+    existing_rows = load_existing_blood_rows(blood_out_path, encoding=CSV_FILE_ENCODING)
+    loaded_pks = {
+        pk for pk, row in existing_rows.items()
+        if _blood_row_has_loaded_url(row)
+    }
     processed_count = 0
     failed_count = 0
     skipped_count = 0
@@ -591,7 +673,7 @@ def process_horse_targets(urls, session, blood_out_path: str, register_depth=4, 
             if csv_text.strip():
                 append_unique_csv(csv_text, blood_out_path, subject_pk)
                 if subject_pk:
-                    existing_pks.add(subject_pk)
+                    loaded_pks.add(subject_pk)
             else:
                 print(f"[WARN] pedigree parse returned empty csv: {url}")
 
@@ -602,7 +684,7 @@ def process_horse_targets(urls, session, blood_out_path: str, register_depth=4, 
                     continue
                 if next_url in visited_urls or next_url in queued:
                     continue
-                if pk and pk in existing_pks:
+                if pk and pk in loaded_pks:
                     continue
                 queued.add(next_url)
                 queue.append(next_url)
@@ -1035,6 +1117,7 @@ def build_csv_from_pedigreequery(soup_obj, horse_family_map=None, register_depth
                         "Details": details,
                         "URL": abs_url,
                         "Horse Name": horse_name_disp,
+                        "LoadURL": "",
                         "SubjectInfoText": "",
                     },
                 )
@@ -1083,6 +1166,7 @@ def build_csv_from_pedigreequery(soup_obj, horse_family_map=None, register_depth
                 "Details": subject.get("Details", "pedigreequery"),
                 "URL": subject.get("URL", ""),
                 "Horse Name": subject.get("Horse Name", ""),
+                "LoadURL": "True",
                 "SubjectInfoText": subject.get("SubjectInfoText", ""),
             },
         )

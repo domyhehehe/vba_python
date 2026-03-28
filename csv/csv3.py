@@ -541,6 +541,30 @@ def load_existing_blood_rows(filepath: str, encoding: str = CSV_FILE_ENCODING):
                 rows_by_pk[pk] = normalized_row
     return rows_by_pk
 
+def load_explicit_loaded_blood_pks(filepath: str, encoding: str = CSV_FILE_ENCODING):
+    loaded_pks = set()
+    if not os.path.exists(filepath):
+        return loaded_pks
+
+    with open(filepath, "r", encoding=encoding, errors="replace", newline="") as f:
+        rr = csv.reader(f)
+        header = None
+        for i, row in enumerate(rr):
+            if i == 0:
+                header = row
+                continue
+            if not row:
+                continue
+            raw_row = {}
+            for idx, col in enumerate(header or []):
+                raw_row[col] = row[idx] if idx < len(row) else ""
+            pk = (raw_row.get("PrimaryKey", "") or "").strip()
+            if not pk:
+                continue
+            if _is_truthy_csv_bool(raw_row.get("LoadURL", "")):
+                loaded_pks.add(pk)
+    return loaded_pks
+
 def load_horse_urls_from_stakes_csv(filepath: str, encoding: str = CSV_FILE_ENCODING):
     urls = []
     seen = set()
@@ -558,6 +582,19 @@ def load_horse_urls_from_stakes_csv(filepath: str, encoding: str = CSV_FILE_ENCO
             seen.add(url)
             urls.append(url)
     return urls
+
+def filter_loaded_horse_urls(urls, blood_out_path: str, encoding: str = CSV_FILE_ENCODING):
+    loaded_pks = load_explicit_loaded_blood_pks(blood_out_path, encoding=encoding)
+
+    filtered = []
+    skipped = 0
+    for url in urls:
+        pk = _pk_from_horse_href(url)
+        if pk and pk in loaded_pks:
+            skipped += 1
+            continue
+        filtered.append(url)
+    return filtered, skipped
 
 def make_session():
     s = requests.Session()
@@ -1421,6 +1458,8 @@ def parse_args(argv=None):
     parser.add_argument("--race-list-url", action="append", default=[], help="Stakes search result/list URL. Repeatable.")
     parser.add_argument("--horse-url", action="append", default=[], help="Specific horse pedigree URL. Repeatable.")
     parser.add_argument("--stakes-csv", action="append", default=[], help="Existing stakes_horses.csv path to seed horse URLs from its URL column.")
+    parser.add_argument("--skip-loaded-stakes-csv", dest="skip_loaded_stakes_csv", action="store_true", help="Skip already loaded horses before fetching when URLs come from --stakes-csv.")
+    parser.add_argument("--no-skip-loaded-stakes-csv", dest="skip_loaded_stakes_csv", action="store_false", help="Do not skip already loaded horses for --stakes-csv input.")
     parser.add_argument("--blood-out", default=os.path.join(os.getcwd(), OUTPUT_DIR_NAME, BLOOD_CSV_NAME), help="Output path for horse pedigree CSV.")
     parser.add_argument("--stakes-out", default=os.path.join(os.getcwd(), OUTPUT_DIR_NAME, STAKES_CSV_NAME), help="Output path for race result CSV.")
     parser.add_argument("--register-depth", type=int, default=4, help="Depth to register into blood CSV per fetched horse page.")
@@ -1429,6 +1468,7 @@ def parse_args(argv=None):
     parser.add_argument("--html-file", help="Local HTML file for one-shot conversion.")
     parser.add_argument("--from-clipboard", action="store_true", help="Read one-shot HTML from clipboard.")
     parser.add_argument("--no-clipboard-copy", action="store_true", help="Disable clipboard copy of result when using one-shot mode.")
+    parser.set_defaults(skip_loaded_stakes_csv=True)
     return parser.parse_args(argv)
 
 def run_one_shot_html(html_code: str, blood_out_path: str, stakes_out_path: str, allow_clipboard_copy: bool):
@@ -1498,11 +1538,11 @@ def cli_main(argv=None):
     blood_out_path = args.blood_out
     stakes_out_path = args.stakes_out
 
-    horse_seed_urls = []
+    direct_horse_seed_urls = []
     for x in args.horse_url:
         x = _normalize_url(x)
-        if x and x not in horse_seed_urls:
-            horse_seed_urls.append(x)
+        if x and x not in direct_horse_seed_urls:
+            direct_horse_seed_urls.append(x)
 
     race_urls = []
     for x in args.race_url:
@@ -1558,14 +1598,32 @@ def cli_main(argv=None):
     if race_urls:
         process_race_targets(race_urls, session=session, stakes_out_path=stakes_out_path, sleep_sec=args.sleep)
 
+    stakes_csv_seed_urls = []
     for stakes_csv_path in args.stakes_csv:
         print(f"[CSV] loading horse URLs from {stakes_csv_path}")
         try:
             for url in load_horse_urls_from_stakes_csv(stakes_csv_path, encoding=CSV_FILE_ENCODING):
-                if url not in horse_seed_urls:
-                    horse_seed_urls.append(url)
+                if url not in stakes_csv_seed_urls:
+                    stakes_csv_seed_urls.append(url)
         except Exception as e:
             print(f"[WARN] stakes csv load failed: {stakes_csv_path} ({e})")
+
+    if args.skip_loaded_stakes_csv and stakes_csv_seed_urls:
+        filtered_urls, skipped_count = filter_loaded_horse_urls(
+            stakes_csv_seed_urls,
+            blood_out_path=blood_out_path,
+            encoding=CSV_FILE_ENCODING,
+        )
+        print(
+            f"[CSV] pre-skip loaded horses from --stakes-csv: "
+            f"input={len(stakes_csv_seed_urls)} skipped={skipped_count} queued={len(filtered_urls)}"
+        )
+        stakes_csv_seed_urls = filtered_urls
+
+    horse_seed_urls = list(direct_horse_seed_urls)
+    for url in stakes_csv_seed_urls:
+        if url not in horse_seed_urls:
+            horse_seed_urls.append(url)
 
     if horse_seed_urls:
         process_horse_targets(

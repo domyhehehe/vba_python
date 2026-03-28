@@ -620,6 +620,31 @@ def fetch_soup(url: str, session=None, timeout: int = DEFAULT_TIMEOUT):
     html = fetch_html(url, session=session, timeout=timeout)
     return BeautifulSoup(html, "html.parser")
 
+def is_pedigreequery_horse_not_found_page(soup_obj) -> bool:
+    if soup_obj is None:
+        return False
+    if soup_obj.find("table", class_="pedigreetable"):
+        return False
+
+    text = soup_obj.get_text(" ", strip=True)
+    text_lower = text.lower()
+    if "horse not found" in text_lower:
+        return True
+    if "can't be found in the database" in text_lower:
+        return True
+    if "cannot be found in the database" in text_lower:
+        return True
+
+    legend = soup_obj.find("legend")
+    if legend and "horse not found" in clean_horse_name(legend.get_text(" ", strip=True)).lower():
+        return True
+
+    for a_tag in soup_obj.find_all("a", href=True):
+        href = a_tag.get("href", "")
+        if "query_type=add" in href and "h=" in href:
+            return True
+    return False
+
 def collect_race_urls_from_list_page(soup_obj):
     race_dict = {}
     for td in soup_obj.find_all("td", class_="w2"):
@@ -699,6 +724,10 @@ def process_horse_targets(urls, session, blood_out_path: str, register_depth=4, 
 
         try:
             soup = fetch_soup(url, session=session)
+            if is_pedigreequery_horse_not_found_page(soup):
+                skipped_count += 1
+                print(f"[SKIP] horse not found page: {url}")
+                continue
             family_map = extract_family_data_map(soup)
             csv_text, subject_pk = build_csv_from_pedigreequery(
                 soup,

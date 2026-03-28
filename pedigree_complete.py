@@ -75,6 +75,22 @@ def fetch_html_via_browser(url: str, timeout: int = 30, headless: bool = True):
         driver.quit()
 
 
+def is_probable_horse_not_found_html(text: str) -> bool:
+    if not text:
+        return False
+    low = text.lower()
+    if "table.pedigreetable" in low:
+        return False
+    return (
+        "horse not found" in low
+        or "can't be found in the database" in low
+        or "cannot be found in the database" in low
+        or ("query_type=add" in low and "report', \"notfound\"" in low)
+        or ("query_type=add" in low and 'report","notfound"' in low)
+        or ("query_type=add" in low and "report\" content=\"notfound\"" in low)
+    )
+
+
 def install_fetch_overrides(base):
     original_make_session = base.make_session
 
@@ -102,7 +118,12 @@ def install_fetch_overrides(base):
                 resp.raise_for_status()
                 resp.encoding = resp.encoding or resp.apparent_encoding or "utf-8"
                 text = resp.text
-                if text and ("pedigreetable" in text or 'class="w2"' in text or "query_type=stakes" in text):
+                if text and (
+                    "pedigreetable" in text
+                    or 'class="w2"' in text
+                    or "query_type=stakes" in text
+                    or is_probable_horse_not_found_html(text)
+                ):
                     return text
             except Exception as req_err:
                 print(f"[WARN] requests fetch failed: {normalized_url} ({req_err})")

@@ -8,11 +8,9 @@ import requests
 from bs4 import BeautifulSoup
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -49,19 +47,15 @@ def build_driver(headless: bool = True):
 def _wait_page_ready(driver, timeout: int):
     wait = WebDriverWait(driver, timeout)
     wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
-
-    locators = [
-        (By.CSS_SELECTOR, "table.pedigreetable"),
-        (By.CSS_SELECTOR, "td.w2 a"),
-        (By.CSS_SELECTOR, "table[border='1']"),
-        (By.TAG_NAME, "body"),
-    ]
-    for by, value in locators:
-        try:
-            wait.until(EC.presence_of_element_located((by, value)))
-            return
-        except TimeoutException:
-            continue
+    wait.until(
+        lambda d: (
+            bool(d.find_elements(By.CSS_SELECTOR, "table.pedigreetable"))
+            or bool(d.find_elements(By.CSS_SELECTOR, "td.w2 a"))
+            or bool(d.find_elements(By.CSS_SELECTOR, "table[border='1']"))
+            or is_probable_horse_not_found_html(d.page_source)
+            or bool(d.find_elements(By.TAG_NAME, "body"))
+        )
+    )
 
 
 def fetch_html_via_browser(url: str, timeout: int = 30, headless: bool = True):
@@ -79,7 +73,7 @@ def is_probable_horse_not_found_html(text: str) -> bool:
     if not text:
         return False
     low = text.lower()
-    if "table.pedigreetable" in low:
+    if "pedigreetable" in low:
         return False
     return (
         "horse not found" in low
@@ -88,6 +82,7 @@ def is_probable_horse_not_found_html(text: str) -> bool:
         or ("query_type=add" in low and "report', \"notfound\"" in low)
         or ("query_type=add" in low and 'report","notfound"' in low)
         or ("query_type=add" in low and "report\" content=\"notfound\"" in low)
+        or ("_setcustomvar" in low and "notfound" in low)
     )
 
 
@@ -129,7 +124,7 @@ def install_fetch_overrides(base):
                 print(f"[WARN] requests fetch failed: {normalized_url} ({req_err})")
 
         print(f"[INFO] browser fetch: {normalized_url}")
-        return fetch_html_via_browser(normalized_url, timeout=timeout, headless=False)
+        return fetch_html_via_browser(normalized_url, timeout=timeout, headless=True)
 
 
     def fetch_soup(url: str, session=None, timeout: int = None, prefer_browser: bool = False):

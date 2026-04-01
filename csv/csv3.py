@@ -7,6 +7,7 @@ import io
 import json
 import time
 import argparse
+from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup, NavigableString, Tag
 import requests
@@ -15,6 +16,11 @@ try:
     import pasteboard
 except Exception:
     pasteboard = None
+
+try:
+    csv.field_size_limit(sys.maxsize)
+except OverflowError:
+    csv.field_size_limit(2147483647)
 
 # =====================
 # Settings
@@ -60,6 +66,7 @@ CSV_HEADER = [
 ]
 
 STAKES_HEADER = ["PrimaryKey", "URL", "RaceDataJSON"]
+RACE_FETCH_LOG_NAME = "race_fetch_log.tsv"
 
 YEAR_4DIGIT_RE = re.compile(r"(\d{4})")
 COUNTRY_IN_TEXT_RE = re.compile(r"\(\s*([A-Za-z]{2,4})\s*\)")
@@ -232,6 +239,21 @@ def _ensure_parent_dir(filepath: str):
     if parent and not os.path.exists(parent):
         os.makedirs(parent, exist_ok=True)
 
+def append_race_fetch_log(log_path: str, fetch_type: str, status: str, url: str, detail: str = ""):
+    _ensure_parent_dir(log_path)
+    write_header = (not os.path.exists(log_path)) or os.path.getsize(log_path) == 0
+    with open(log_path, "a", encoding="utf-8", errors="replace", newline="") as f:
+        w = csv.writer(f, delimiter="\t", lineterminator="\n")
+        if write_header:
+            w.writerow(["timestamp", "type", "status", "url", "detail"])
+        w.writerow([
+            datetime.now().isoformat(timespec="seconds"),
+            fetch_type,
+            status,
+            url,
+            detail,
+        ])
+
 def _blood_row_value(row, field_name: str):
     if isinstance(row, dict):
         return row.get(field_name, "")
@@ -327,6 +349,107 @@ def dump_stakes_rows_csv(stakes_rows: list):
         ])
     return out.getvalue()
 
+def _load_race_data_json(value):
+    try:
+        race_data = json.loads(value) if value else []
+    except Exception:
+        race_data = []
+    if isinstance(race_data, dict):
+        race_data = [race_data]
+    elif not isinstance(race_data, list):
+        race_data = []
+    return race_data
+
+def _race_year_page_key(obj: dict):
+    year = _year_digits(obj.get("year", "") or "")
+    race_page_id = str(obj.get("race_page_id", "") or "").strip()
+    return (year, race_page_id)
+
+def _parse_stakes_csv_text(csv_text: str):
+    if not csv_text.strip():
+        return []
+
+    src = io.StringIO(csv_text)
+    rows = list(csv.reader(src))
+    if not rows:
+        return []
+
+    out = []
+    for row in rows[1:]:
+        if len(row) < 3:
+            continue
+        pk = (row[0] or "").strip()
+        url = (row[1] or "").strip()
+        if not pk:
+            continue
+        out.append({
+            "PrimaryKey": pk,
+            "URL": url,
+            "RaceDataJSON": _load_race_data_json((row[2] or "").strip()),
+        })
+    return out
+
+def _merge_race_data_json(existing_records, incoming_records):
+    merged = {}
+    for rec in existing_records or []:
+        key = _race_year_page_key(rec)
+        if key == ("", ""):
+            key = _normalize_race_record_for_key(rec)
+        merged[key] = rec
+    for rec in incoming_records or []:
+        key = _race_year_page_key(rec)
+        if key == ("", ""):
+            key = _normalize_race_record_for_key(rec)
+        if key in merged:
+            continue
+        merged[key] = rec
+    return sorted(
+        merged.values(),
+        key=lambda x: (
+            str(x.get("year", "") or ""),
+            int(x.get("placing", 999) or 999),
+            str(x.get("race_page_id", "") or ""),
+        )
+    )
+
+def load_existing_stakes_race_keys(filepath: str, encoding: str = CSV_FILE_ENCODING):
+    keys = set()
+    if not os.path.exists(filepath):
+        return keys
+
+    with open(filepath, "r", encoding=encoding, errors="replace", newline="") as f:
+        rr = csv.reader(f)
+        for i, row in enumerate(rr):
+            if i == 0 or len(row) < 3:
+                continue
+            for rec in _load_race_data_json((row[2] or "").strip()):
+                key = _race_year_page_key(rec)
+                if key != ("", ""):
+                    keys.add(key)
+    return keys
+
+def filter_stakes_rows_by_race_keys(stakes_rows, existing_race_keys):
+    if not existing_race_keys:
+        return stakes_rows, set()
+
+    filtered_rows = []
+    skipped_keys = set()
+    for row in stakes_rows:
+        kept_records = []
+        for rec in row.get("RaceDataJSON", []) or []:
+            key = _race_year_page_key(rec)
+            if key != ("", "") and key in existing_race_keys:
+                skipped_keys.add(key)
+                continue
+            kept_records.append(rec)
+        if kept_records:
+            filtered_rows.append({
+                "PrimaryKey": row.get("PrimaryKey", ""),
+                "URL": row.get("URL", ""),
+                "RaceDataJSON": kept_records,
+            })
+    return filtered_rows, skipped_keys
+
 def sort_blood_csv_file(filepath: str, encoding: str = CSV_FILE_ENCODING):
     if not os.path.exists(filepath):
         return 0
@@ -416,91 +539,96 @@ def append_unique_csv(csv_text: str, filepath: str, subject_pk: str):
 
 def append_unique_stakes_rows_csv(csv_text: str, filepath: str, encoding: str = CSV_FILE_ENCODING):
     if not csv_text.strip():
-        return
+        return {"horses_written": 0, "records_written": 0, "race_keys_added": set()}
     _ensure_parent_dir(filepath)
+    incoming_rows = _parse_stakes_csv_text(csv_text)
+    if not incoming_rows:
+        return {"horses_written": 0, "records_written": 0, "race_keys_added": set()}
 
-    src = io.StringIO(csv_text)
-    r = csv.reader(src)
-    rows = list(r)
-    if not rows:
-        return
-
-    header = rows[0]
-    data_rows = rows[1:]
-    existing = {}
-    file_exists = os.path.exists(filepath)
-
-    if file_exists:
-        with open(filepath, "r", encoding=encoding, errors="replace", newline="") as f:
-            rr = csv.reader(f)
-            for i, row in enumerate(rr):
-                if i == 0 or len(row) < 3:
-                    continue
-                pk = (row[0] or "").strip()
-                url = (row[1] or "").strip()
-                js = (row[2] or "").strip()
-                if not pk:
-                    continue
-                try:
-                    arr = json.loads(js) if js else []
-                    if isinstance(arr, dict):
-                        arr = [arr]
-                    elif not isinstance(arr, list):
-                        arr = []
-                except Exception:
-                    arr = []
-                existing[pk] = {"URL": url, "RaceDataJSON": arr}
-
-    for row in data_rows:
-        if len(row) < 3:
-            continue
-
-        pk = (row[0] or "").strip()
-        url = (row[1] or "").strip()
-        js = (row[2] or "").strip()
-        if not pk:
-            continue
-
-        try:
-            incoming = json.loads(js) if js else []
-            if isinstance(incoming, dict):
-                incoming = [incoming]
-            elif not isinstance(incoming, list):
-                incoming = []
-        except Exception:
-            incoming = []
-
-        if pk not in existing:
-            existing[pk] = {"URL": url, "RaceDataJSON": []}
-
-        if url and not existing[pk]["URL"]:
-            existing[pk]["URL"] = url
-
-        seen = set(_normalize_race_record_for_key(x) for x in existing[pk]["RaceDataJSON"])
-        for rec in incoming:
-            k = _normalize_race_record_for_key(rec)
-            if k in seen:
-                continue
-            seen.add(k)
-            existing[pk]["RaceDataJSON"].append(rec)
-
-        existing[pk]["RaceDataJSON"].sort(
-            key=lambda x: (
-                str(x.get("year", "") or ""),
-                int(x.get("placing", 999) or 999),
-                str(x.get("race_page_id", "") or ""),
-            )
+    incoming_by_pk = {}
+    race_keys_added = set()
+    records_written = 0
+    for row in incoming_rows:
+        pk = row.get("PrimaryKey", "")
+        if pk not in incoming_by_pk:
+            incoming_by_pk[pk] = {"URL": row.get("URL", ""), "RaceDataJSON": []}
+        if row.get("URL") and not incoming_by_pk[pk]["URL"]:
+            incoming_by_pk[pk]["URL"] = row.get("URL", "")
+        incoming_by_pk[pk]["RaceDataJSON"] = _merge_race_data_json(
+            incoming_by_pk[pk]["RaceDataJSON"],
+            row.get("RaceDataJSON", []),
         )
 
-    with open(filepath, "w", encoding=encoding, errors="replace", newline="") as f:
-        w = csv.writer(f, lineterminator="\n")
-        w.writerow(header)
-        for pk in sorted(existing.keys()):
+    for row in incoming_by_pk.values():
+        records_written += len(row["RaceDataJSON"])
+        for rec in row["RaceDataJSON"]:
+            key = _race_year_page_key(rec)
+            if key != ("", ""):
+                race_keys_added.add(key)
+    unique_horses_written = len(incoming_by_pk)
+
+    if not os.path.exists(filepath):
+        with open(filepath, "w", encoding=encoding, errors="replace", newline="") as f:
+            w = csv.writer(f, lineterminator="\n")
+            w.writerow(STAKES_HEADER)
+            for pk in sorted(incoming_by_pk.keys()):
+                row = incoming_by_pk[pk]
+                w.writerow([
+                    pk,
+                    row["URL"],
+                    json.dumps(row["RaceDataJSON"], ensure_ascii=False, separators=(",", ":"), sort_keys=True),
+                ])
+        return {
+            "horses_written": unique_horses_written,
+            "records_written": records_written,
+            "race_keys_added": race_keys_added,
+        }
+
+    temp_path = filepath + ".tmp"
+    with open(filepath, "r", encoding=encoding, errors="replace", newline="") as src, \
+         open(temp_path, "w", encoding=encoding, errors="replace", newline="") as dst:
+        rr = csv.reader(src)
+        w = csv.writer(dst, lineterminator="\n")
+
+        existing_header = next(rr, None)
+        w.writerow(STAKES_HEADER if not existing_header else existing_header[:3])
+
+        for row in rr:
+            if len(row) < 3:
+                continue
+            pk = (row[0] or "").strip()
+            url = (row[1] or "").strip()
+            js = (row[2] or "").strip()
+            if not pk:
+                continue
+
+            if pk not in incoming_by_pk:
+                w.writerow([pk, url, js])
+                continue
+
+            incoming = incoming_by_pk.pop(pk)
+            merged_records = _merge_race_data_json(_load_race_data_json(js), incoming["RaceDataJSON"])
+            merged_url = url or incoming["URL"]
             w.writerow([
                 pk,
-                existing[pk]["URL"],
-                json.dumps(existing[pk]["RaceDataJSON"], ensure_ascii=False, separators=(",", ":"), sort_keys=True),
+                merged_url,
+                json.dumps(merged_records, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
             ])
+
+        for pk in sorted(incoming_by_pk.keys()):
+            row = incoming_by_pk[pk]
+            w.writerow([
+                pk,
+                row["URL"],
+                json.dumps(row["RaceDataJSON"], ensure_ascii=False, separators=(",", ":"), sort_keys=True),
+            ])
+
+    os.replace(temp_path, filepath)
+    return {
+        "horses_written": unique_horses_written,
+        "records_written": records_written,
+        "race_keys_added": race_keys_added,
+    }
 
 def load_existing_blood_pks(filepath: str, encoding: str = CSV_FILE_ENCODING):
     out = set()
@@ -634,6 +762,12 @@ def is_pedigreequery_horse_not_found_page(soup_obj) -> bool:
         return True
     if "cannot be found in the database" in text_lower:
         return True
+    if 'report", "notfound"' in text_lower:
+        return True
+    if "report', \"notfound\"" in text_lower:
+        return True
+    if "_setcustomvar" in text_lower and "notfound" in text_lower:
+        return True
 
     legend = soup_obj.find("legend")
     if legend and "horse not found" in clean_horse_name(legend.get_text(" ", strip=True)).lower():
@@ -673,30 +807,71 @@ def extract_frontier_horse_urls(soup_obj, parse_depth=5):
         urls.append(url)
     return urls
 
-def process_race_page_url(url: str, session, stakes_out_path: str):
+def process_race_page_url(url: str, session, stakes_out_path: str, existing_race_keys=None):
     soup = fetch_soup(url, session=session)
     csv_text, _ = build_csv_from_pedigreequery_stakes_per_horse(soup)
     if not csv_text.strip():
-        return 0
-    append_unique_stakes_rows_csv(csv_text, stakes_out_path, encoding=CSV_FILE_ENCODING)
-    rows = list(csv.reader(io.StringIO(csv_text)))
-    return max(len(rows) - 1, 0)
+        return {"horses_added": 0, "records_added": 0, "skipped_race_keys": set()}
 
-def process_race_targets(urls, session, stakes_out_path: str, sleep_sec: float = 0.0):
+    stakes_rows = _parse_stakes_csv_text(csv_text)
+    skipped_race_keys = set()
+    if existing_race_keys is not None:
+        stakes_rows, skipped_race_keys = filter_stakes_rows_by_race_keys(stakes_rows, existing_race_keys)
+        if not stakes_rows:
+            return {"horses_added": 0, "records_added": 0, "skipped_race_keys": skipped_race_keys}
+
+    write_stats = append_unique_stakes_rows_csv(
+        dump_stakes_rows_csv(stakes_rows),
+        stakes_out_path,
+        encoding=CSV_FILE_ENCODING,
+    )
+    if existing_race_keys is not None:
+        existing_race_keys.update(write_stats["race_keys_added"])
+    return {
+        "horses_added": write_stats["horses_written"],
+        "records_added": write_stats["records_written"],
+        "skipped_race_keys": skipped_race_keys,
+    }
+
+def process_race_targets(urls, session, stakes_out_path: str, sleep_sec: float = 0.0, race_log_path: str = ""):
     total = 0
+    existing_race_keys = load_existing_stakes_race_keys(stakes_out_path, encoding=CSV_FILE_ENCODING)
     for i, url in enumerate(urls, 1):
         print(f"[RACE] {i}/{len(urls)} {url}")
+        if race_log_path:
+            append_race_fetch_log(race_log_path, "race", "START", url, f"index={i}/{len(urls)}")
         try:
-            count = process_race_page_url(url, session, stakes_out_path)
-            total += count
-            print(f"[OK] horses added/merged: {count}")
+            result = process_race_page_url(
+                url,
+                session,
+                stakes_out_path,
+                existing_race_keys=existing_race_keys,
+            )
+            total += result["records_added"]
+            if result["records_added"] == 0 and result["skipped_race_keys"]:
+                skipped_keys_text = ", ".join(
+                    f"{year}:{race_page_id}" for year, race_page_id in sorted(result["skipped_race_keys"])
+                )
+                print(f"[SKIP] existing race-year found: {skipped_keys_text}")
+                if race_log_path:
+                    append_race_fetch_log(race_log_path, "race", "SKIP", url, skipped_keys_text)
+            else:
+                ok_detail = (
+                    f"horses_updated={result['horses_added']} "
+                    f"race_records_added={result['records_added']}"
+                )
+                print(f"[OK] {ok_detail}")
+                if race_log_path:
+                    append_race_fetch_log(race_log_path, "race", "OK", url, ok_detail)
         except Exception as e:
             print(f"[WARN] race scrape failed: {url} ({e})")
+            if race_log_path:
+                append_race_fetch_log(race_log_path, "race", "WARN", url, str(e))
         if sleep_sec > 0 and i < len(urls):
             time.sleep(sleep_sec)
     return total
 
-def process_horse_targets(urls, session, blood_out_path: str, register_depth=4, parse_depth=5, sleep_sec: float = 0.0):
+def process_horse_targets(urls, session, blood_out_path: str, register_depth=4, parse_depth=5, sleep_sec: float = 0.0, race_log_path: str = ""):
     queue = []
     for x in urls:
         nx = _normalize_url(x)
@@ -721,12 +896,16 @@ def process_horse_targets(urls, session, blood_out_path: str, register_depth=4, 
             continue
         visited_urls.add(url)
         print(f"[HORSE] {processed_count + 1} url={url} pending={len(queue)}")
+        if race_log_path:
+            append_race_fetch_log(race_log_path, "horse", "START", url, f"index={processed_count + 1} pending={len(queue)}")
 
         try:
             soup = fetch_soup(url, session=session)
             if is_pedigreequery_horse_not_found_page(soup):
                 skipped_count += 1
                 print(f"[SKIP] horse not found page: {url}")
+                if race_log_path:
+                    append_race_fetch_log(race_log_path, "horse", "SKIP", url, "horse not found page")
                 continue
             family_map = extract_family_data_map(soup)
             csv_text, subject_pk = build_csv_from_pedigreequery(
@@ -757,13 +936,18 @@ def process_horse_targets(urls, session, blood_out_path: str, register_depth=4, 
                 added_frontier += 1
 
             processed_count += 1
-            print(
-                f"[OK] horse={subject_pk or '(unknown)'} rows={written_rows} "
+            ok_detail = (
+                f"horse={subject_pk or '(unknown)'} rows={written_rows} "
                 f"next={added_frontier} pending={len(queue)} out={blood_out_path}"
             )
+            print(f"[OK] {ok_detail}")
+            if race_log_path:
+                append_race_fetch_log(race_log_path, "horse", "OK", url, ok_detail)
         except Exception as e:
             failed_count += 1
             print(f"[WARN] horse scrape failed: {url} ({e})")
+            if race_log_path:
+                append_race_fetch_log(race_log_path, "horse", "WARN", url, str(e))
 
         if sleep_sec > 0 and queue:
             time.sleep(sleep_sec)
@@ -1566,6 +1750,7 @@ def cli_main(argv=None):
     args = parse_args(argv)
     blood_out_path = args.blood_out
     stakes_out_path = args.stakes_out
+    race_log_path = os.path.join(os.path.dirname(os.path.abspath(stakes_out_path)), RACE_FETCH_LOG_NAME)
 
     direct_horse_seed_urls = []
     for x in args.horse_url:
@@ -1614,6 +1799,7 @@ def cli_main(argv=None):
 
     for list_url in race_list_urls:
         print(f"[LIST] collecting race URLs from {list_url}")
+        append_race_fetch_log(race_log_path, "race_list", "START", list_url, "")
         try:
             soup = fetch_soup(list_url, session=session)
             race_map = collect_race_urls_from_list_page(soup)
@@ -1621,21 +1807,40 @@ def cli_main(argv=None):
                 if race_url not in race_urls:
                     race_urls.append(race_url)
             print(f"[OK] collected {len(race_map)} race URLs")
+            append_race_fetch_log(race_log_path, "race_list", "OK", list_url, f"collected_race_urls={len(race_map)}")
         except Exception as e:
             print(f"[WARN] race list fetch failed: {list_url} ({e})")
+            append_race_fetch_log(race_log_path, "race_list", "WARN", list_url, str(e))
 
     if race_urls:
-        process_race_targets(race_urls, session=session, stakes_out_path=stakes_out_path, sleep_sec=args.sleep)
+        print(f"[LOG] race fetch log: {race_log_path}")
+        process_race_targets(
+            race_urls,
+            session=session,
+            stakes_out_path=stakes_out_path,
+            sleep_sec=args.sleep,
+            race_log_path=race_log_path,
+        )
 
     stakes_csv_seed_urls = []
     for stakes_csv_path in args.stakes_csv:
         print(f"[CSV] loading horse URLs from {stakes_csv_path}")
+        append_race_fetch_log(race_log_path, "stakes_csv", "START", stakes_csv_path, "")
         try:
+            loaded_count_before = len(stakes_csv_seed_urls)
             for url in load_horse_urls_from_stakes_csv(stakes_csv_path, encoding=CSV_FILE_ENCODING):
                 if url not in stakes_csv_seed_urls:
                     stakes_csv_seed_urls.append(url)
+            append_race_fetch_log(
+                race_log_path,
+                "stakes_csv",
+                "OK",
+                stakes_csv_path,
+                f"loaded_horse_urls={len(stakes_csv_seed_urls) - loaded_count_before}",
+            )
         except Exception as e:
             print(f"[WARN] stakes csv load failed: {stakes_csv_path} ({e})")
+            append_race_fetch_log(race_log_path, "stakes_csv", "WARN", stakes_csv_path, str(e))
 
     if args.skip_loaded_stakes_csv and stakes_csv_seed_urls:
         filtered_urls, skipped_count = filter_loaded_horse_urls(
@@ -1662,6 +1867,7 @@ def cli_main(argv=None):
             register_depth=args.register_depth,
             parse_depth=args.parse_depth,
             sleep_sec=args.sleep,
+            race_log_path=race_log_path,
         )
 
     if not race_urls and not horse_seed_urls and not args.stakes_csv:
